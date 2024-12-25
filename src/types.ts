@@ -6,6 +6,7 @@ export type TCharacter = {
   questCompletionTime: Moment | null;
   remainingTime: string;
   img: string;
+  claimReward: boolean;
 };
 
 //Define Quest Item Type

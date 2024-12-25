@@ -1,181 +1,122 @@
-import { ReactNode, useRef, useState } from "react";
-import { TCharacter } from "./types";
-import moment from "moment";
-import useQuestLoop from "./hooks/useQuestLoop";
-import { createPortal } from "react-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router";
+import StartScreen from "./pages/StartScreen";
+import NoPage from "./pages/NoPage";
 
-enum Locations {
-  wildlands = "Wildlands",
-}
+const blackBox = {
+  initial: {
+    height: "100vh",
+  },
+  animate: {
+    height: 0,
+    display: "none",
+    transition: {
+      when: "afterChildren",
+      duration: 1.5,
+      ease: [0.87, 0, 0.13, 1],
+    },
+  },
+};
 
-function Modal({ children }: { children: ReactNode }) {
-  const modalRoot = document.getElementById("modal-root");
+const textContainer = {
+  initial: {
+    opacity: 1,
+  },
+  animate: {
+    opacity: 0,
+    transition: {
+      duration: 0.25,
+      when: "afterChildren",
+    },
+  },
+};
 
-  if (!modalRoot) {
-    return <div>loading...</div>;
-  }
+const text = {
+  initial: {
+    y: 40,
+  },
+  animate: {
+    y: 80,
+    transition: {
+      duration: 1.5,
+      ease: [0.87, 0, 0.13, 1],
+    },
+  },
+};
 
-  return createPortal(
-    <>
-      <div className="overlay" />
-      <div className="modal flex flex-col justify-center items-center gap-4 relative">
-        {children}
-      </div>
-    </>,
-    modalRoot
+const InitialTransition = () => {
+  return (
+    <motion.div
+      className="absolute bottom-0 z-50 flex items-center justify-center w-full bg-black"
+      initial="initial"
+      animate="animate"
+      variants={blackBox}
+      onAnimationStart={() => document.body.classList.add("overflow-hidden")}
+      onAnimationComplete={() =>
+        document.body.classList.remove("overflow-hidden")
+      }
+    >
+      <motion.svg variants={textContainer} className="absolute z-50 flex">
+        <pattern
+          id="pattern"
+          patternUnits="userSpaceOnUse"
+          width={750}
+          height={800}
+          className="text-white"
+        >
+          <rect className="w-full h-full fill-current" />
+          <motion.rect
+            variants={text}
+            className="w-full h-full text-gray-600 fill-current"
+          />
+        </pattern>
+        <text
+          className="text-4xl font-bold"
+          textAnchor="middle"
+          x="50%"
+          y="50%"
+          style={{ fill: "url(#pattern)", fontSize: "2rem" }}
+        >
+          idle dungeon
+        </text>
+      </motion.svg>
+    </motion.div>
+  );
+};
+
+function AnimatedRoutes() {
+  const location = useLocation();
+
+  return (
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
+        <Route
+          path="/"
+          element={
+            <>
+              <InitialTransition />
+              <StartScreen />
+            </>
+          }
+        />
+        <Route
+          path="*"
+          element={
+            <>
+              <NoPage />
+            </>
+          }
+        />
+      </Routes>
+    </AnimatePresence>
   );
 }
 
 function App() {
-  const disableUI = true;
-  const location1 = true;
-  const requestId = useRef<number>(0);
-  const [character, setCharacter] = useState<TCharacter>({
-    status: "idle",
-    questStartTime: null,
-    questCompletionTime: null,
-    remainingTime: "N/A",
-    img: "./character.PNG",
-  });
-
-  const [showQuestModal, setShowQuestModal] = useState<boolean>(false);
-  const [characterSelected, setCharacterSelected] = useState<boolean>(false);
-
-  const [selectedLocation, setSelectedLocation] = useState<Locations | null>(
-    null
-  );
-
-  const toggleQuestModal = () => {
-    // if a character was selected but then the window was closed, reset the character selection
-    if (characterSelected) {
-      setCharacterSelected(false);
-    }
-    setShowQuestModal((s) => !s);
-  };
-
-  const handleSelectLocation = (location: Locations) => {
-    setSelectedLocation(location);
-    toggleQuestModal();
-  };
-
-  const handleSetCharacterQuestTime = () => {
-    setCharacter({
-      ...character,
-      remainingTime:
-        moment(character?.questCompletionTime?.diff(moment())).format(
-          "m[m] s[s]"
-        ) ?? "N/A",
-    });
-  };
-
-  const handleResetCharacter = () => {
-    setCharacter({
-      status: "idle",
-      questStartTime: null,
-      questCompletionTime: null,
-      remainingTime: "N/A",
-      img: "./character.PNG",
-    });
-  };
-
-  const isCharacterOnQuest = useQuestLoop({
-    character,
-    handleSetCharacterQuestTime,
-    handleResetCharacter,
-    requestId,
-  });
-
-  const handleSendCharacterOnQuest = () => {
-    const questStartTime = moment();
-    console.log("questStartTime:", questStartTime.format("h[h] m[m]"));
-
-    const questEndTime = questStartTime.add(1, "m");
-    console.log("questEndTime:", questEndTime.format("h[h] m[m]"));
-
-    const remainingTime = moment(questEndTime.diff(moment())).format(
-      "m[m] s[s]"
-    );
-    console.log("remainingTime:", remainingTime);
-
-    setCharacter({
-      status: "in-quest",
-      questStartTime: questStartTime,
-      questCompletionTime: questEndTime,
-      remainingTime: remainingTime,
-      img: "./character.PNG",
-    });
-  };
-
   return (
-    <main className="min-h-dvh w-full flex flex-col justify-center items-center gap-4">
-      <div className="game-terrain min-w-[50%] min-h-[80dvh] relative">
-        {!disableUI && (
-          <>
-            <h1>Player</h1>
-            <p>Status: {character.status}</p>
-            <p>Completion Time: {character.remainingTime}</p>
-            <p>On Quest: {isCharacterOnQuest ? "True" : "False"}</p>
-
-            <button
-              disabled={character.status !== "idle"}
-              onClick={handleSendCharacterOnQuest}
-              className="py-2 px-4 rounded-md bg-blue-500 disabled:bg-slate-400 disabled:text-slate-600"
-            >
-              {character.status === "in-quest" ? "In Quest" : "Send on quest"}
-            </button>
-          </>
-        )}
-
-        {location1 && (
-          <div className="absolute top-[60%] left-[55%] -translate-x-1/2 -translate-y-1/2">
-            <button
-              className="pb-12 rounded-lg"
-              onClick={() => handleSelectLocation(Locations.wildlands)}
-            >
-              Wildlands
-            </button>
-          </div>
-        )}
-      </div>
-
-      {showQuestModal && (
-        <Modal>
-          <button
-            className="absolute top-[4%] right-[4%]"
-            onClick={toggleQuestModal}
-          >
-            CLOSE
-          </button>
-
-          <h1 className="text-2xl">Location: {selectedLocation}</h1>
-
-          <div className="w-full flex flex-col gap-6">
-            <h1 className="text-xl">Select Character</h1>
-            <ul className="">
-              <li
-                className={`${
-                  characterSelected && "border border-teal-400"
-                } w-fit p-2`}
-              >
-                <button onClick={() => setCharacterSelected((s) => !s)}>
-                  <img src={`${character?.img}`} className="h-44 w-44" />
-                  <p>Status: {character.status}</p>
-                  <p>Completion Time: {character.remainingTime}</p>
-                  <p>On Quest: {isCharacterOnQuest ? "True" : "False"}</p>
-                </button>
-              </li>
-            </ul>
-          </div>
-          <button
-            disabled={character.status !== "idle" || !characterSelected}
-            onClick={handleSendCharacterOnQuest}
-            className="py-2 px-4 rounded-md bg-blue-500 disabled:bg-slate-400 disabled:text-slate-600"
-          >
-            {character.status === "in-quest" ? "In Quest" : "Send on quest"}
-          </button>
-        </Modal>
-      )}
-    </main>
+    <BrowserRouter>
+      <AnimatedRoutes />
+    </BrowserRouter>
   );
 }
 

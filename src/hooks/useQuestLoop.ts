@@ -6,6 +6,7 @@ interface IQuestLoopProps {
   character: TCharacter;
   handleSetCharacterQuestTime: () => void;
   handleResetCharacter: () => void;
+  handleSetClaimableReward: () => void;
   requestId: React.MutableRefObject<number>;
 }
 
@@ -13,6 +14,7 @@ const useQuestLoop = ({
   character,
   handleSetCharacterQuestTime,
   handleResetCharacter,
+  handleSetClaimableReward,
   requestId,
 }: IQuestLoopProps) => {
   const [onQuest, setOnQuest] = useState<boolean>(false);
@@ -37,12 +39,19 @@ const useQuestLoop = ({
       stopGameLoop();
       setOnQuest(false);
       handleResetCharacter();
+      handleSetClaimableReward();
     } else if (character?.questCompletionTime !== null) {
       runGameLoop();
     }
 
     return () => stopGameLoop();
-  }, [character, handleSetCharacterQuestTime, handleResetCharacter, requestId]);
+  }, [
+    character,
+    handleSetCharacterQuestTime,
+    handleResetCharacter,
+    handleSetClaimableReward,
+    requestId,
+  ]);
 
   return onQuest;
 };

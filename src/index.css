@@ -1,3 +1,5 @@
+@import "nes-ui-react";
+@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -21,6 +23,9 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
+  font-family: "Pixelify Sans", serif;
+  font-optical-sizing: auto;
+  font-style: normal;
 }
 
 .game-terrain {
@@ -50,4 +55,8 @@
   padding: 50px;
   z-index: 10;
   border: 2px solid teal;
+}
+
+.nes-ui-text.nes-ui-is-xlarge {
+  font-size: 2rem;
 }
