@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
+import { ReactNode, useRef, useState } from "react";
 import { TCharacter } from "../types";
 import moment from "moment";
 import useQuestLoop from "../hooks/useQuestLoop";
@@ -7,6 +7,7 @@ import { getQuestReward } from "../utils/quest";
 import { Text } from "nes-ui-react";
 import ButtonLong from "../components/ButtonLong";
 import InputField from "../components/InputField";
+import useImageLoader from "../hooks/useImageLoader";
 
 const allImageSources = [
   "./male-character.svg",
@@ -17,21 +18,6 @@ const allImageSources = [
   "./ui-next.svg",
   "./ui-next-disabled.svg",
 ];
-
-function loadAllImgs() {
-  console.log("loading img assets...");
-  const promises = allImageSources.map((source) => {
-    return new Promise<void>((resolve) => {
-      const img = new Image();
-      img.src = source;
-      img.onload = () => resolve();
-    });
-  });
-
-  return Promise.all(promises).then(() => {
-    console.log("All img assets loaded!");
-  });
-}
 
 const characters = [
   { src: "./male-character.svg" },
@@ -85,11 +71,7 @@ function StartScreen() {
     null
   );
 
-  const [assetsLoaded, setAssetsLoaded] = useState<boolean>(false);
-
-  useEffect(() => {
-    loadAllImgs().then(() => setAssetsLoaded(true));
-  }, []);
+  const { allLoaded: assetsLoaded } = useImageLoader(allImageSources);
 
   const toggleQuestModal = () => {
     // if a character was selected but then the window was closed, reset the character selection
