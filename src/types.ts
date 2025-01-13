@@ -1,12 +1,28 @@
 import { Moment } from "moment";
 
+export enum CharacterStatus {
+  IDLE = "IDLE",
+  INQUEST = "INQUEST",
+  RECOVERING = "RECOVERING",
+}
+
 export type TCharacter = {
-  status: "idle" | "in-quest" | "recovering";
+  status: CharacterStatus;
   questStartTime: Moment | null;
   questCompletionTime: Moment | null;
   remainingTime: string;
   img: string;
   claimReward: boolean;
+};
+
+export type Character = {
+  id: number;
+  name: string;
+  img: string;
+  hp: number;
+  mana: number;
+  energy: number;
+  status: string;
 };
 
 //Define Quest Item Type
@@ -28,3 +44,7 @@ export enum ItemRarity {
 }
 
 export type Rarity = ItemRarity;
+
+export enum Locations {
+  WOODLANDS = "WOODLANDS",
+}

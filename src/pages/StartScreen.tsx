@@ -1,10 +1,8 @@
-import { ReactNode, useRef, useState } from "react";
-import { TCharacter } from "../types";
+import { useRef, useState } from "react";
+import { CharacterStatus, Locations, TCharacter } from "../types";
 import moment from "moment";
 import useQuestLoop from "../hooks/useQuestLoop";
-import { createPortal } from "react-dom";
-import { getQuestReward } from "../utils/quest";
-import { Text } from "nes-ui-react";
+import { Modal, Text } from "nes-ui-react";
 import ButtonLong from "../components/ButtonLong";
 import InputField from "../components/InputField";
 import useImageLoader from "../hooks/useImageLoader";
@@ -24,28 +22,6 @@ const characters = [
   { src: "./female-character.svg" },
 ];
 
-enum Locations {
-  WOODLANDS = "WOODLANDS",
-}
-
-function Modal({ children }: { children: ReactNode }) {
-  const modalRoot = document.getElementById("modal-root");
-
-  if (!modalRoot) {
-    return <div>loading...</div>;
-  }
-
-  return createPortal(
-    <>
-      <div className="overlay" />
-      <div className="modal flex flex-col justify-center items-center gap-4 relative">
-        {children}
-      </div>
-    </>,
-    modalRoot
-  );
-}
-
 function StartScreen() {
   const disableOldUI = true;
   const location1 = true;
@@ -56,7 +32,7 @@ function StartScreen() {
   const [playerName, setPlayerName] = useState<string>("");
 
   const [character, setCharacter] = useState<TCharacter>({
-    status: "idle",
+    status: CharacterStatus.IDLE,
     questStartTime: null,
     questCompletionTime: null,
     remainingTime: "N/A",
@@ -65,7 +41,7 @@ function StartScreen() {
   });
 
   const [showQuestModal, setShowQuestModal] = useState<boolean>(false);
-  const [showCharacterModal, setShowCharacterModal] = useState<boolean>(false);
+
   const [characterSelected, setCharacterSelected] = useState<boolean>(false);
   const [selectedLocation, setSelectedLocation] = useState<Locations | null>(
     null
@@ -79,10 +55,6 @@ function StartScreen() {
       setCharacterSelected(false);
     }
     setShowQuestModal((s) => !s);
-  };
-
-  const toggleCharacterModal = () => {
-    setShowCharacterModal((s) => !s);
   };
 
   const handleSelectLocation = (location: Locations) => {
@@ -105,7 +77,7 @@ function StartScreen() {
   //* 2. Set character properties to that which correspond to quest completion behaviour
   const handleResetCharacter = () => {
     setCharacter({
-      status: "idle",
+      status: CharacterStatus.IDLE,
       questStartTime: null,
       questCompletionTime: null,
       remainingTime: "N/A",
@@ -140,21 +112,13 @@ function StartScreen() {
     console.log("remainingTime:", remainingTime);
 
     setCharacter({
-      status: "in-quest",
+      status: CharacterStatus.INQUEST,
       questStartTime: questStartTime,
       questCompletionTime: questEndTime,
       remainingTime: remainingTime,
       img: "./character.PNG",
       claimReward: false,
     });
-  };
-
-  const handleClaimReward = () => {
-    //Claim Reward
-    getQuestReward();
-
-    //Reset character back to default properties
-    handleResetCharacter();
   };
 
   const handleNextCharacterSprite = () => {
@@ -289,7 +253,7 @@ function StartScreen() {
         <div className="min-w-[50%] min-h-[80dvh] relative">
           {/* Open character panel */}
           <div>
-            <button onClick={toggleCharacterModal}>Character</button>
+            <button onClick={() => console.log("click")}>Character</button>
           </div>
 
           {location1 && (
@@ -335,45 +299,11 @@ function StartScreen() {
             </ul>
           </div>
           <button
-            disabled={character.status !== "idle" || !characterSelected}
+            disabled={character.status !== CharacterStatus.IDLE || !characterSelected}
             onClick={handleSendCharacterOnQuest}
             className="py-2 px-4 rounded-md bg-blue-500 disabled:bg-slate-400 disabled:text-slate-600"
           >
-            {character.status === "in-quest" ? "In Quest" : "Send on quest"}
-          </button>
-        </Modal>
-      )}
-
-      {/* Character Modal */}
-      {showCharacterModal && (
-        <Modal>
-          <button
-            className="absolute top-[4%] right-[4%]"
-            onClick={toggleCharacterModal}
-          >
-            CLOSE
-          </button>
-
-          <div className="w-full flex flex-col gap-6">
-            <ul className="">
-              <li
-                className={`${
-                  characterSelected && "border border-teal-400"
-                } w-fit p-2`}
-              >
-                <img src={`${character?.img}`} className="h-44 w-44" />
-                <p>Status: {character.status}</p>
-                <p>Completion Time: {character.remainingTime}</p>
-                <p>On Quest: {isCharacterOnQuest ? "True" : "False"}</p>
-              </li>
-            </ul>
-          </div>
-          <button
-            disabled={!character.claimReward}
-            onClick={handleClaimReward}
-            className="py-2 px-4 rounded-md bg-blue-500 disabled:bg-slate-400 disabled:text-slate-600"
-          >
-            Claim Reward
+            {character.status === CharacterStatus.INQUEST ? "In Quest" : "Send on quest"}
           </button>
         </Modal>
       )}

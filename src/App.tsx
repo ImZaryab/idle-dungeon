@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { BrowserRouter, Route, Routes, useLocation } from "react-router";
 import StartScreen from "./pages/StartScreen";
 import NoPage from "./pages/NoPage";
+import { GameScreen } from "./pages/GameScreen";
 
 const blackBox = {
   initial: {
@@ -96,6 +97,15 @@ function AnimatedRoutes() {
             <>
               <InitialTransition />
               <StartScreen />
+            </>
+          }
+        />
+        <Route
+          path="/game"
+          element={
+            <>
+              <InitialTransition />
+              <GameScreen />
             </>
           }
         />
