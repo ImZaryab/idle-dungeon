@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Character, CharacterStatus, Locations } from "../types";
 import { createPortal } from "react-dom";
 import { Button } from "nes-ui-react";
+import useStore from "../store";
 
 function Modal({ children }: { children: ReactNode }) {
   const modalRoot = document.getElementById("modal-root");
@@ -23,6 +24,7 @@ function Modal({ children }: { children: ReactNode }) {
 }
 
 export const GameScreen = () => {
+  const authUser = useStore((state) => state.authUser);
   const [loading, setLoading] = useState<boolean>(true);
   const [isCampOpen, setIsCampOpen] = useState<boolean>(false);
   const [isQuestOpen, setIsQuestOpen] = useState<boolean>(false);
@@ -33,8 +35,14 @@ export const GameScreen = () => {
   const [selectedCharacter, setSelectedCharacter] = useState<Character>();
 
   useEffect(() => {
+    if (authUser?.id) {
+      fetchCharacters();
+    }
+  }, [authUser]);
+
+  useEffect(() => {
     const eventSource = new EventSource(
-      `http://localhost:3000/character/stream`
+      `http://localhost:3000/api/character/stream`
     );
     eventSource.onmessage = ({ data }) => {
       const completionPayload: {
@@ -44,7 +52,6 @@ export const GameScreen = () => {
       console.log(completionPayload);
       fetchCharacters();
     };
-    fetchCharacters();
 
     // Clean up the connection when component unmounts
     return () => {
@@ -52,10 +59,21 @@ export const GameScreen = () => {
     };
   }, []);
 
+  if(!authUser){
+    return <h1>No authorised user data found!</h1>
+  }
+
   async function fetchCharacters() {
-    const response = await fetch("http://localhost:3000/character/getAll", {
-      method: "GET",
-    });
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVER_ENDPOINT}/character/getBoundCharacters`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: authUser?.id ?? "",
+        }),
+      }
+    );
 
     if (!response.ok) {
       const message = `An error has occured: ${response.status}`;
@@ -87,7 +105,7 @@ export const GameScreen = () => {
     console.log("Request Payload:", payload);
 
     const response = await fetch(
-      "http://localhost:3000/character/sendOnQuest",
+      `${import.meta.env.VITE_SERVER_ENDPOINT}/character/sendOnQuest`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

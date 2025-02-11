@@ -1,11 +1,18 @@
-import { useRef, useState } from "react";
-import { CharacterStatus, Locations, TCharacter } from "../types";
+import { useEffect, useRef, useState } from "react";
+import {
+  CharacterStatus,
+  Locations,
+  TCharacter,
+  TVerifyUserResponse,
+} from "../types";
 import moment from "moment";
 import useQuestLoop from "../hooks/useQuestLoop";
 import { Modal, Text } from "nes-ui-react";
 import ButtonLong from "../components/ButtonLong";
 import InputField from "../components/InputField";
 import useImageLoader from "../hooks/useImageLoader";
+import useStore from "../store";
+import { useNavigate } from "react-router";
 
 const allImageSources = [
   "./male-character.svg",
@@ -25,7 +32,9 @@ const characters = [
 function StartScreen() {
   const disableOldUI = true;
   const location1 = true;
+  const navigate = useNavigate();
   const requestId = useRef<number>(0);
+  const authUser = useStore((state) => state.authUser);
   const [loading, setLoading] = useState<boolean>(true);
   const [newGame, setNewGame] = useState<boolean>(false);
   const [characterSprite, setCharacterSprite] = useState<number>(0);
@@ -47,7 +56,38 @@ function StartScreen() {
     null
   );
 
+  const [isNewUser, setIsNewUser] = useState<boolean>(true);
+
   const { allLoaded: assetsLoaded } = useImageLoader(allImageSources);
+
+  useEffect(() => {
+    if (authUser) {
+      getOrCreateUser();
+    }
+  }, [authUser]);
+
+  async function getOrCreateUser() {
+    const response = await fetch(
+      `${import.meta.env.VITE_SERVER_ENDPOINT}/user/verify-user`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user: {
+            ...authUser,
+          },
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      const message = `An error has occured: ${response.status}`;
+      throw new Error(message);
+    } else {
+      const res: TVerifyUserResponse = await response.json();
+      setIsNewUser(res.data.isNewUser ?? true);
+    }
+  }
 
   const toggleQuestModal = () => {
     // if a character was selected but then the window was closed, reset the character selection
@@ -136,16 +176,24 @@ function StartScreen() {
   };
 
   const handleCreateCharacter = async () => {
-    const result = await fetch("http://localhost:3000/character/create", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: playerName,
-        img: characters[characterSprite].src,
-      }),
-    });
+    const result = await fetch(
+      `${import.meta.env.VITE_SERVER_ENDPOINT}/character/create`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: authUser?.id ?? "",
+          name: playerName,
+          img: characters[characterSprite].src,
+        }),
+      }
+    );
 
     console.log("RESULT BODY:", result.body);
+  };
+
+  const handleContinue = () => {
+    navigate("/game");
   };
 
   return (
@@ -160,8 +208,17 @@ function StartScreen() {
       />
 
       {!newGame && (
-        <div className="relative z-10">
-          <ButtonLong text="New Game" onClick={() => setNewGame(true)} />
+        <div className="relative z-10 flex flex-col justify-center items-center gap-8">
+          <ButtonLong
+            text="New Game"
+            disabled={!isNewUser}
+            onClick={() => setNewGame(true)}
+          />
+          <ButtonLong
+            text="Continue"
+            disabled={isNewUser}
+            onClick={handleContinue}
+          />
         </div>
       )}
 
@@ -299,11 +356,15 @@ function StartScreen() {
             </ul>
           </div>
           <button
-            disabled={character.status !== CharacterStatus.IDLE || !characterSelected}
+            disabled={
+              character.status !== CharacterStatus.IDLE || !characterSelected
+            }
             onClick={handleSendCharacterOnQuest}
             className="py-2 px-4 rounded-md bg-blue-500 disabled:bg-slate-400 disabled:text-slate-600"
           >
-            {character.status === CharacterStatus.INQUEST ? "In Quest" : "Send on quest"}
+            {character.status === CharacterStatus.INQUEST
+              ? "In Quest"
+              : "Send on quest"}
           </button>
         </Modal>
       )}

@@ -6,6 +6,7 @@ interface IButtonLongProps {
   onClick: () => void;
   props?: ButtonHTMLAttributes<HTMLButtonElement>;
   btnClassName?: string;
+  disabled?: boolean;
 }
 
 const ButtonLong = ({
@@ -13,10 +14,12 @@ const ButtonLong = ({
   onClick,
   props,
   btnClassName,
+  disabled,
 }: IButtonLongProps) => {
   return (
     <button
-      className={`hover:cursor-pointer relative text-black ${btnClassName}`}
+      disabled={disabled ?? false}
+      className={`hover:cursor-pointer relative text-black disabled:cursor-not-allowed disabled:opacity-60 ${btnClassName}`}
       onClick={onClick}
       {...props}
     >

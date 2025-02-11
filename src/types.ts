@@ -48,3 +48,12 @@ export type Rarity = ItemRarity;
 export enum Locations {
   WOODLANDS = "WOODLANDS",
 }
+
+export type TVerifyUserResponse = {
+  message: string;
+  completed: boolean;
+  data: {
+    name: string;
+    isNewUser: boolean;
+  };
+};
