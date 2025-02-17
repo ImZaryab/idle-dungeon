@@ -1,4 +1,4 @@
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Character, CharacterStatus, Locations } from "../types";
 import { createPortal } from "react-dom";
@@ -33,55 +33,119 @@ export const GameScreen = () => {
   const [showSendOnQuestModal, setShowSendOnQuestModal] =
     useState<boolean>(false);
   const [selectedCharacter, setSelectedCharacter] = useState<Character>();
+  const [isFetchingCharacters, setIsFetchingCharacters] = useState(false);
+  const [fetchCharactersError, setFetchCharactersError] = useState<
+    string | null
+  >(null);
+
+  const fetchCharacters = useCallback(async () => {
+    // Separate data fetching into its own function
+    const fetchData = async () => {
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVER_ENDPOINT}/character/getBoundCharacters`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId: authUser?.id ?? "",
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error(`An error has occurred: ${response.status}`);
+      }
+
+      return await response.json();
+    };
+
+    // Loading state handling happens outside the memoized function
+    if (isFetchingCharacters) return;
+
+    setIsFetchingCharacters(true);
+    setFetchCharactersError(null);
+
+    try {
+      const result = await fetchData();
+      setCharacters(result ?? []);
+    } catch (err) {
+      setFetchCharactersError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching characters"
+      );
+    } finally {
+      setIsFetchingCharacters(false);
+    }
+  }, [authUser]);
+  //! Adding 'isFetchingCharacters' will cause infinite loop
 
   useEffect(() => {
     if (authUser?.id) {
       fetchCharacters();
     }
-  }, [authUser]);
+  }, [authUser, fetchCharacters]);
 
   useEffect(() => {
+    if (!authUser?.id) return;
+
     const eventSource = new EventSource(
       `http://localhost:3000/api/character/stream`
     );
-    eventSource.onmessage = ({ data }) => {
-      const completionPayload: {
-        message: string;
-        playableCharacterId: number;
-      } = JSON.parse(data);
-      console.log(completionPayload);
-      fetchCharacters();
+
+    // Handle successful connections
+    eventSource.onopen = () => {
+      console.log("SSE connection established");
+    };
+
+    // Handle messages
+    eventSource.onmessage = (event) => {
+      try {
+        const completionPayload: {
+          message: string;
+          playableCharacterId: number;
+        } = JSON.parse(event.data);
+
+        console.log("Received SSE update:", completionPayload);
+        fetchCharacters();
+      } catch (err) {
+        console.error("Error processing SSE message:", err);
+        setFetchCharactersError("Error processing server event");
+      }
+    };
+
+    // Handle errors
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      setFetchCharactersError("Lost connection to server events");
+      eventSource.close();
     };
 
     // Clean up the connection when component unmounts
     return () => {
+      console.log("Closing SSE connection");
       eventSource.close();
     };
-  }, []);
+  }, [authUser, fetchCharacters]);
 
-  if(!authUser){
-    return <h1>No authorised user data found!</h1>
+  if (!authUser) {
+    return <h1>No authorised user data found!</h1>;
   }
 
-  async function fetchCharacters() {
-    const response = await fetch(
-      `${import.meta.env.VITE_SERVER_ENDPOINT}/character/getBoundCharacters`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: authUser?.id ?? "",
-        }),
-      }
+  if (fetchCharactersError) {
+    return (
+      <div className="error-container">
+        <div className="error-message">{fetchCharactersError}</div>
+        <button
+          onClick={() => {
+            setFetchCharactersError(null);
+            fetchCharacters();
+          }}
+        >
+          Retry
+        </button>
+      </div>
     );
-
-    if (!response.ok) {
-      const message = `An error has occured: ${response.status}`;
-      throw new Error(message);
-    }
-
-    const result: Character[] = await response.json();
-    setCharacters(result ?? []);
   }
 
   const toggleCharacterModal = () => {
