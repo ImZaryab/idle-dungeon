@@ -3,6 +3,7 @@ import { Moment } from "moment";
 export enum CharacterStatus {
   IDLE = "IDLE",
   INQUEST = "INQUEST",
+  QUESTCOMPLETED = "QUESTCOMPLETED",
   RECOVERING = "RECOVERING",
 }
 
@@ -57,3 +58,8 @@ export type TVerifyUserResponse = {
     isNewUser: boolean;
   };
 };
+
+export type Quest = {
+  id: number;
+  questCompleted: boolean;
+}

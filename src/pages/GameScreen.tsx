@@ -1,9 +1,10 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
 import { motion } from "framer-motion";
-import { Character, CharacterStatus, Locations } from "../types";
+import { Character, CharacterStatus, Locations, Quest } from "../types";
 import { createPortal } from "react-dom";
 import { Button } from "nes-ui-react";
 import useStore from "../store";
+import Spinner from "../components/Spinner";
 
 function Modal({ children }: { children: ReactNode }) {
   const modalRoot = document.getElementById("modal-root");
@@ -29,6 +30,10 @@ export const GameScreen = () => {
   const [isCampOpen, setIsCampOpen] = useState<boolean>(false);
   const [isQuestOpen, setIsQuestOpen] = useState<boolean>(false);
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [awaitingCollection, setAwaitingCollection] = useState<number[]>([]);
+  const [sendingOnQuest, setSendingOnQuest] = useState<boolean>(false);
+  const [collectingQuestReward, setCollectingQuestReward] =
+    useState<boolean>(false);
   const [showCharacterModal, setShowCharacterModal] = useState<boolean>(false);
   const [showSendOnQuestModal, setShowSendOnQuestModal] =
     useState<boolean>(false);
@@ -100,17 +105,24 @@ export const GameScreen = () => {
 
     // Handle messages
     eventSource.onmessage = (event) => {
+      //TODO: need to clean up event structure
       try {
         const completionPayload: {
           message: string;
           playableCharacterId: number;
+          questId: number;
         } = JSON.parse(event.data);
 
         console.log("Received SSE update:", completionPayload);
-        fetchCharacters();
+        setAwaitingCollection([
+          ...awaitingCollection,
+          completionPayload.playableCharacterId,
+        ]);
       } catch (err) {
         console.error("Error processing SSE message:", err);
         setFetchCharactersError("Error processing server event");
+      } finally {
+        fetchCharacters();
       }
     };
 
@@ -126,7 +138,7 @@ export const GameScreen = () => {
       console.log("Closing SSE connection");
       eventSource.close();
     };
-  }, [authUser, fetchCharacters]);
+  }, [authUser]);
 
   if (!authUser) {
     return <h1>No authorised user data found!</h1>;
@@ -159,38 +171,44 @@ export const GameScreen = () => {
   };
 
   const handleSendOnQuest = async (location: Locations) => {
-    if (!selectedCharacter) return;
+    setSendingOnQuest(true);
+    try {
+      if (!selectedCharacter) return;
 
-    const payload = {
-      playableCharacterId: selectedCharacter.id,
-      questLocation: location,
-    };
+      const payload = {
+        playableCharacterId: selectedCharacter.id,
+        questLocation: location,
+      };
 
-    console.log("Request Payload:", payload);
+      console.log("Request Payload:", payload);
 
-    const response = await fetch(
-      `${import.meta.env.VITE_SERVER_ENDPOINT}/character/sendOnQuest`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVER_ENDPOINT}/character/sendOnQuest`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        const message = `An error has occured: ${response.status}`;
+        throw new Error(message);
       }
-    );
 
-    if (!response.ok) {
-      const message = `An error has occured: ${response.status}`;
-      throw new Error(message);
+      const result: { quest: Quest; message: string; completed: boolean } =
+        await response.json();
+      console.log("handleSendOnQuest: ", result);
+
+      if (result.completed) {
+        fetchCharacters();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      toggleCharacterModal();
+      setSendingOnQuest(false);
     }
-
-    const result: { quest: unknown; message: string; completed: boolean } =
-      await response.json();
-    console.log("handleSendOnQuest: ", result);
-
-    if (result.completed) {
-      fetchCharacters();
-    }
-
-    toggleCharacterModal();
   };
 
   // const handleClaimReward = () => {
@@ -200,6 +218,48 @@ export const GameScreen = () => {
   //   //Reset character back to default properties
   //   handleResetCharacter();
   // };
+
+  const handleCollectQuestReward = async () => {
+    setCollectingQuestReward(true);
+    if (!selectedCharacter) return;
+
+    try {
+      const payload = {
+        playableCharacterId: selectedCharacter.id,
+      };
+
+      console.log("Request Payload:", payload);
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SERVER_ENDPOINT}/character/completeQuest`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        const message = `An error has occured: ${response.status}`;
+        throw new Error(message);
+      }
+
+      const result = await response.json();
+      console.log("handleCollectQuestReward:", result);
+
+      if (result.completed) {
+        setAwaitingCollection((s) =>
+          s.filter((characterId) => characterId !== selectedCharacter.id)
+        );
+        fetchCharacters();
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setShowCharacterModal(false);
+      setCollectingQuestReward(false);
+    }
+  };
 
   return (
     <main className="min-h-dvh w-full relative overflow-hidden">
@@ -228,13 +288,13 @@ export const GameScreen = () => {
         <motion.div>
           <span style={{ fontSize: "2rem" }}>In Camp</span>
         </motion.div>
-        <ul className="mt-6 flex flex-col gap-2">
+        <ul className="mt-6 px-1 flex flex-col gap-2">
           {characters
             .filter((char) => char.status === CharacterStatus.IDLE)
             .map((character) => (
               <li
                 key={character.id}
-                className="border border-black flex justify-between items-center"
+                className="p-4 border-2 border-slate-700 flex justify-between items-center"
               >
                 <div className="flex items-center gap-2">
                   <img src={character.img} alt="" width={50} />
@@ -251,8 +311,10 @@ export const GameScreen = () => {
                 </div>
                 <button
                   onClick={() => handleSetSelectedCharacter(character)}
-                  className="h-12 w-12 hover:cursor-pointer bg-amber-500"
-                ></button>
+                  className="p-2 hover:cursor-pointer bg-amber-500"
+                >
+                  <p style={{ fontSize: "1rem" }}>Quest Menu</p>
+                </button>
               </li>
             ))}
         </ul>
@@ -273,13 +335,17 @@ export const GameScreen = () => {
         <motion.div>
           <span style={{ fontSize: "2rem" }}>On Quest</span>
         </motion.div>
-        <ul className="mt-6 flex flex-col gap-2">
+        <ul className="mt-6 px-1 flex flex-col gap-2">
           {characters
-            .filter((char) => char.status === CharacterStatus.INQUEST)
+            .filter(
+              (char) =>
+                char.status === CharacterStatus.INQUEST ||
+                char.status === CharacterStatus.QUESTCOMPLETED
+            )
             .map((character) => (
               <li
                 key={character.id}
-                className="border border-black flex justify-between items-center"
+                className="p-4 border-2 border-slate-700 flex justify-between items-center"
               >
                 <div className="flex items-center gap-2">
                   <img src={character.img} alt="" width={50} />
@@ -295,9 +361,16 @@ export const GameScreen = () => {
                   </div>
                 </div>
                 <button
+                  disabled={character.status !== CharacterStatus.QUESTCOMPLETED}
                   onClick={() => handleSetSelectedCharacter(character)}
-                  className="h-12 w-12 hover:cursor-pointer bg-amber-500"
-                ></button>
+                  className="p-2 hover:cursor-pointer bg-amber-500 disabled:bg-amber-700 disabled:cursor-not-allowed"
+                >
+                  <p style={{ fontSize: "1rem" }}>
+                    {character.status !== CharacterStatus.QUESTCOMPLETED
+                      ? "In-Quest"
+                      : "Complete Quest"}
+                  </p>
+                </button>
               </li>
             ))}
         </ul>
@@ -314,49 +387,74 @@ export const GameScreen = () => {
           </button>
           {!showSendOnQuestModal ? (
             <>
-              <div className="w-full flex flex-col justify-center items-center gap-6">
-                <img src={`${selectedCharacter?.img}`} className="h-44 w-44" />
-                <p style={{ fontSize: "1.5rem" }}>
-                  Status: {selectedCharacter?.status}
-                </p>
-                <Button onClick={() => setShowSendOnQuestModal((s) => !s)}>
-                  <p style={{ fontSize: "1.5rem" }}>Send on quest</p>
-                </Button>
-              </div>
+              {collectingQuestReward ? (
+                <>
+                  <Spinner />
+                </>
+              ) : (
+                <div className="w-full flex flex-col justify-center items-center gap-6">
+                  <img
+                    src={`${selectedCharacter?.img}`}
+                    className="h-44 w-44"
+                  />
+                  <p style={{ fontSize: "1.5rem" }}>
+                    Status: {selectedCharacter?.status}
+                  </p>
+                  {selectedCharacter &&
+                  selectedCharacter.status ===
+                    CharacterStatus.QUESTCOMPLETED ? (
+                    <Button onClick={handleCollectQuestReward}>
+                      <p style={{ fontSize: "1.5rem" }}>Collect Rewards</p>
+                    </Button>
+                  ) : (
+                    <Button onClick={() => setShowSendOnQuestModal((s) => !s)}>
+                      <p style={{ fontSize: "1.5rem" }}>Send on quest</p>
+                    </Button>
+                  )}
+                </div>
+              )}
             </>
           ) : (
             <>
-              <h2 style={{ fontSize: "1.5rem" }}>Select Quest Location:</h2>
-              <ul className="flex flex-col gap-4">
-                <li>
-                  <button
-                    onClick={() => handleSendOnQuest(Locations.WOODLANDS)}
-                    disabled={false}
-                    className="p-4 hover:cursor-pointer hover:bg-cyan-600"
-                    style={{ fontSize: "1.25rem" }}
-                  >
-                    {Locations.WOODLANDS}
-                  </button>
-                </li>
-                <li>
-                  <button
-                    disabled={true}
-                    className="p-4 hover:cursor-pointer disabled:hover:cursor-not-allowed hover:bg-cyan-600"
-                    style={{ fontSize: "1.25rem" }}
-                  >
-                    LOCATION 2
-                  </button>
-                </li>
-                <li>
-                  <button
-                    disabled={true}
-                    className="p-4 hover:cursor-pointer disabled:hover:cursor-not-allowed hover:bg-cyan-600"
-                    style={{ fontSize: "1.25rem" }}
-                  >
-                    LOCATION 3
-                  </button>
-                </li>
-              </ul>
+              {sendingOnQuest ? (
+                <>
+                  <Spinner />
+                </>
+              ) : (
+                <>
+                  <h2 style={{ fontSize: "1.5rem" }}>Select Quest Location:</h2>
+                  <ul className="flex flex-col gap-4">
+                    <li>
+                      <button
+                        onClick={() => handleSendOnQuest(Locations.WOODLANDS)}
+                        disabled={false}
+                        className="p-4 hover:cursor-pointer hover:bg-cyan-600"
+                        style={{ fontSize: "1.25rem" }}
+                      >
+                        {Locations.WOODLANDS}
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        disabled={true}
+                        className="p-4 hover:cursor-pointer disabled:hover:cursor-not-allowed hover:bg-cyan-600"
+                        style={{ fontSize: "1.25rem" }}
+                      >
+                        LOCATION 2
+                      </button>
+                    </li>
+                    <li>
+                      <button
+                        disabled={true}
+                        className="p-4 hover:cursor-pointer disabled:hover:cursor-not-allowed hover:bg-cyan-600"
+                        style={{ fontSize: "1.25rem" }}
+                      >
+                        LOCATION 3
+                      </button>
+                    </li>
+                  </ul>
+                </>
+              )}
             </>
           )}
         </Modal>
