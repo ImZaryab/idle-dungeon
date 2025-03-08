@@ -1,10 +1,11 @@
 import { ReactNode, useCallback, useEffect, useState } from "react";
-import { motion } from "framer-motion";
 import { Character, CharacterStatus, Locations, Quest } from "../types";
 import { createPortal } from "react-dom";
 import { Button } from "nes-ui-react";
 import useStore from "../store";
 import Spinner from "../components/Spinner";
+import CollapsableMenu from "../components/CollapsableMenu";
+import CharactersList from "../components/CharactersList";
 
 function Modal({ children }: { children: ReactNode }) {
   const modalRoot = document.getElementById("modal-root");
@@ -274,67 +275,27 @@ export const GameScreen = () => {
       />
 
       {/* Camp Menu */}
-      <motion.div
-        initial={false}
-        animate={isCampOpen ? "open" : "closed"}
-        variants={{
-          open: { translateY: "0%" },
-          closed: { translateY: "92%" },
-        }}
-        transition={{ ease: [0.08, 0.65, 0.53, 0.96], duration: 0.3 }}
-        className="menu px-2 z-10 bg-gray-400 text-black w-[30dvw] h-[40dvh] absolute bottom-0 left-0"
-        onClick={() => setIsCampOpen(!isCampOpen)}
+      <CollapsableMenu
+        isOpen={isCampOpen}
+        handleOpen={() => setIsCampOpen((s) => !s)}
+        menuTitle="In Camp"
+        position="left"
       >
-        <motion.div>
-          <span style={{ fontSize: "2rem" }}>In Camp</span>
-        </motion.div>
-        <ul className="mt-6 px-1 flex flex-col gap-2">
-          {characters
-            .filter((char) => char.status === CharacterStatus.IDLE)
-            .map((character) => (
-              <li
-                key={character.id}
-                className="p-4 border-2 border-slate-700 flex justify-between items-center"
-              >
-                <div className="flex items-center gap-2">
-                  <img src={character.img} alt="" width={50} />
-                  <div className="flex flex-col">
-                    <p style={{ fontSize: "1.5rem" }}>{character.name}</p>
-                    <p style={{ fontSize: "1rem" }}>HP: {character.hp}/100</p>
-                    <p style={{ fontSize: "1rem" }}>
-                      Mana: {character.mana}/100
-                    </p>
-                    <p style={{ fontSize: "1rem" }}>
-                      Energy: {character.energy}/10
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleSetSelectedCharacter(character)}
-                  className="p-2 hover:cursor-pointer bg-amber-500"
-                >
-                  <p style={{ fontSize: "1rem" }}>Quest Menu</p>
-                </button>
-              </li>
-            ))}
-        </ul>
-      </motion.div>
+        <CharactersList
+          data={characters.filter(
+            (char) => char.status === CharacterStatus.IDLE
+          )}
+          handleSetSelectedCharacter={handleSetSelectedCharacter}
+        />
+      </CollapsableMenu>
 
       {/* Quest Menu */}
-      <motion.div
-        initial={false}
-        animate={isQuestOpen ? "open" : "closed"}
-        variants={{
-          open: { translateY: "0%" },
-          closed: { translateY: "92%" },
-        }}
-        transition={{ ease: [0.08, 0.65, 0.53, 0.96], duration: 0.3 }}
-        className="menu px-2 z-10 bg-gray-400 text-black w-[30dvw] h-[40dvh] absolute bottom-0 right-0"
-        onClick={() => setIsQuestOpen(!isQuestOpen)}
+      <CollapsableMenu
+        isOpen={isQuestOpen}
+        handleOpen={() => setIsQuestOpen((s) => !s)}
+        menuTitle="On Quest"
+        position="right"
       >
-        <motion.div>
-          <span style={{ fontSize: "2rem" }}>On Quest</span>
-        </motion.div>
         <ul className="mt-6 px-1 flex flex-col gap-2">
           {characters
             .filter(
@@ -374,7 +335,7 @@ export const GameScreen = () => {
               </li>
             ))}
         </ul>
-      </motion.div>
+      </CollapsableMenu>
 
       {/* Character Modal */}
       {showCharacterModal && (
