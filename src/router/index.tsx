@@ -7,6 +7,7 @@ import LoginPage from "../pages/Login";
 import { useUser } from "@clerk/clerk-react";
 import { AuthGuard } from "../components/auth/AuthGuard";
 import Layout from "../components/Layout";
+import WorldMap from "../pages/WorldMap";
 
 const blackBox = {
   initial: {
@@ -102,6 +103,7 @@ function AnimatedRoutes() {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<LoginPage />} />
         <Route element={<Layout />}>
+          <Route path="/map" element={<WorldMap />} />
           <Route
             path="/"
             element={
