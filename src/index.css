@@ -1,11 +1,18 @@
 @import "nes-ui-react";
-@import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap");
+/* @import url("https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400..700&display=swap"); */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: "Pixel Arial";
+  src: url("./assets/fonts/pixel-arial.otf") format("opentype");
+}
+
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "Pixel Arial", Inter, system-ui, Avenir, Helvetica, Arial,
+    sans-serif;
   line-height: 1.5;
   font-weight: 400;
 
@@ -23,9 +30,11 @@
   box-sizing: border-box;
   padding: 0;
   margin: 0;
-  font-family: "Pixelify Sans", serif;
+  font-family: "Pixel Arial";
+  letter-spacing: 0.1em;
   font-optical-sizing: auto;
   font-style: normal;
+  user-select: none;
 }
 
 html ::-webkit-scrollbar {
@@ -50,7 +59,8 @@ html ::-webkit-scrollbar {
 }
 
 .modal {
-  width: 800px;
+  min-height: 50dvh;
+  width: 50%;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -63,4 +73,16 @@ html ::-webkit-scrollbar {
 
 .nes-ui-text.nes-ui-is-xlarge {
   font-size: 2rem;
+}
+
+h1 {
+  font-size: 1.75rem !important;
+}
+
+h2 {
+  font-size: 1.5rem !important;
+}
+
+h3 {
+  font-size: 1.25rem !important;
 }
