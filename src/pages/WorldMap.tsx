@@ -1,6 +1,9 @@
-import { ReactNode, useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
+import { useEffect, useRef, useState } from "react";
 import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
+import Modal from "../components/Modal";
+import TabLayout from "../components/TabLayout";
+import ItemList from "../components/ItemList";
+import Listing from "../components/Listing";
 
 interface IMapLocation {
   id: number;
@@ -87,28 +90,187 @@ const worldMapLocations: IMapLocation[] = [
   },
 ];
 
-function Modal({ children }: { children: ReactNode }) {
-  const modalRoot = document.getElementById("modal-root");
+const quests = [
+  {
+    id: 0,
+    locationId: 0,
+    title: "Log supply shortage",
+    type: "Gathering",
+    description:
+      "The local carpenter wants someone to bring a bunch of logs from the nearby forest.",
+    completionTime: "30 mins",
+    reputationRequirement: 0,
+    buffs: {
+      Endurance: "-15% completion time",
+      Power: "-5% completion time",
+    },
+  },
+  {
+    id: 1,
+    locationId: 0,
+    title: "Stone supply shortage",
+    type: "Gathering",
+    description:
+      "The blacksmith has ran out of stones and is willing to pay a decent reward to whoever brings some stones.",
+    completionTime: "30 mins",
+    reputationRequirement: 0,
+    buffs: {
+      Endurance: "-15% completion time",
+      Power: "-5% completion time",
+    },
+  },
+  {
+    id: 2,
+    locationId: 0,
+    title: "Field Trouble",
+    type: "Combat",
+    description:
+      "The locals are tired of wild beasts damaging their fields and want someone to take care of the problem by any means necessary.",
+    completionTime: "1 Hour",
+    reputationRequirement: 0,
+    buffs: {
+      Endurance: "-15% completion time",
+      Power: "-5% completion time",
+    },
+  },
+];
 
-  if (!modalRoot) {
-    return <div>loading...</div>;
-  }
-
-  return createPortal(
-    <>
-      <div className="overlay" />
-      <div className="modal relative flex justify-center items-center bg-black bg-opacity-80">
-        {children}
-      </div>
-    </>,
-    modalRoot
-  );
+enum ModalTabs {
+  Questboard = "Questboard",
+  Shop = "Shop",
+  Inn = "Inn",
 }
+
+const tabs = [...Object.values(ModalTabs)];
+
+const items = [
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+  {
+    img: "",
+    price: 10,
+  },
+  {
+    img: "",
+    price: 5,
+  },
+  {
+    img: "",
+    price: 15,
+  },
+];
 
 const WorldMap = () => {
   const [selectedLocation, setSelectedLocation] = useState<IMapLocation | null>(
     null
   );
+  const [selectedTab, setSelectedTab] = useState<string>(tabs[0]);
   const [showLocationDetails, setShowLocationDetails] =
     useState<boolean>(false);
 
@@ -154,6 +316,15 @@ const WorldMap = () => {
     }
   };
 
+  const handleLocationModalToggle = () => {
+    setShowLocationDetails((s) => !s);
+    setSelectedTab(tabs[0]);
+  };
+
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+  };
+
   return (
     <div
       id="game-content"
@@ -178,13 +349,13 @@ const WorldMap = () => {
                 ...{
                   width: "100%",
                   height: "100%",
-                  backgroundColor: "skyblue",
+                  backgroundColor: "steelblue",
                 },
               }}
             >
               <div className="map-container w-max h-max">
                 <img
-                  src="/world-map.png"
+                  src="/world-map-2.png"
                   alt=""
                   className="w-auto h-[100dvh] object-contain"
                   draggable={false}
@@ -221,29 +392,45 @@ const WorldMap = () => {
       </TransformWrapper>
 
       {/* Location Details Modal */}
-      {showLocationDetails && selectedLocation !== null && (
-        <Modal>
-          <button
-            onClick={() => setShowLocationDetails((s) => !s)}
-            className="absolute top-4 right-4 hover:cursor-pointer group"
-          >
-            <h3 className="underline-offset-4 group-hover:underline">CLOSE</h3>
-          </button>
+      {selectedLocation !== null && (
+        <Modal
+          showModal={showLocationDetails}
+          handleModalToggle={handleLocationModalToggle}
+        >
+          <div className="text-teal-900">
+            <div className="px-10 py-6 w-full">
+              <TabLayout
+                tabs={tabs}
+                value={selectedTab}
+                handleTabChange={handleTabChange}
+              />
 
-          <div className="flex flex-col justify-center items-center">
-            <h1 className="underline underline-offset-2">Location Details</h1>
-            <h2 className="text-center">{selectedLocation.locationDetails}</h2>
+              {/* QUESTBOARD */}
+              {selectedTab === ModalTabs.Questboard && (
+                <ul className="mt-6 flex flex-col gap-4 items-center h-[405px] overflow-y-auto">
+                  {quests
+                    .filter((q) => q.locationId === selectedLocation.id)
+                    .map((q, index) => (
+                      <Listing key={index}>
+                        <li className="absolute top-0 left-0 py-4 pr-4 pl-6">
+                          <h2 className="px-8 underline underline-offset-3">
+                            {q.title}
+                          </h2>
+                          <h3 className="mt-1">{q.description}</h3>
 
-            <div className="flex items-center justify-center gap-4">
-              <button className="py-4 px-8 mt-8 bg-teal-700 hover:cursor-pointer hover:text-black hover:bg-white">
-                <h2>Go on a quest</h2>
-              </button>
-              <button className="py-4 px-8 mt-8 bg-teal-700 hover:cursor-pointer hover:text-black hover:bg-white disabled:cursor-not-allowed disabled:bg-teal-950 disabled:text-slate-600">
-                <h2>Shop</h2>
-              </button>
-              <button disabled className="py-4 px-8 mt-8 bg-teal-700 hover:cursor-pointer hover:text-black hover:bg-white disabled:cursor-not-allowed disabled:bg-teal-950 disabled:text-slate-600">
-                <h2>Rest</h2>
-              </button>
+                          <div className="w-full flex justify-end pr-4">
+                            <button className="hover:cursor-pointer border border-teal-900 px-4 text-center py-1 hover:bg-white">
+                              <h3>Accept</h3>
+                            </button>
+                          </div>
+                        </li>
+                      </Listing>
+                    ))}
+                </ul>
+              )}
+
+              {/* SHOP */}
+              {selectedTab === ModalTabs.Shop && <ItemList items={items} />}
             </div>
           </div>
         </Modal>

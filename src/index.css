@@ -59,16 +59,11 @@ html ::-webkit-scrollbar {
 }
 
 .modal {
-  min-height: 50dvh;
-  width: 50%;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: "#000";
-  padding: 50px;
   z-index: 10;
-  border: 2px solid teal;
 }
 
 .nes-ui-text.nes-ui-is-xlarge {
