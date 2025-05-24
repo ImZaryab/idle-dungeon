@@ -62,4 +62,15 @@ export type TVerifyUserResponse = {
 export type Quest = {
   id: number;
   questCompleted: boolean;
+};
+
+export interface IMapLocation {
+  id: number;
+  name: string;
+  position: {
+    top: string;
+    left: string;
+  };
+  isDisabled: boolean;
+  locationDetails: string;
 }

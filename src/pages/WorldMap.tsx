@@ -1,94 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { TransformWrapper, TransformComponent } from "react-zoom-pan-pinch";
 import Modal from "../components/Modal";
 import TabLayout from "../components/TabLayout";
 import ItemList from "../components/ItemList";
 import Listing from "../components/Listing";
-
-interface IMapLocation {
-  id: number;
-  name: string;
-  position: {
-    top: string;
-    left: string;
-  };
-  isDisabled: boolean;
-  locationDetails: string;
-}
-
-const worldMapLocations: IMapLocation[] = [
-  {
-    id: 0,
-    name: "Westfordshire",
-    position: { top: "51%", left: "18%" },
-    isDisabled: false,
-    locationDetails:
-      "This is your home town. You start your adventures from here. Before you leave, make sure your inventory is stacked and your gear is all set! Once your adventure is over, you can come back here to rest.",
-  },
-  {
-    id: 1,
-    name: "Altar of stars",
-    position: { top: "28%", left: "45%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 2,
-    name: "Sanctum of sorrows",
-    position: { top: "40%", left: "69%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 3,
-    name: "Cloudmillton",
-    position: { top: "45%", left: "51%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 4,
-    name: "Sunpoint Settlement",
-    position: { top: "66%", left: "48%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 5,
-    name: "Haunted Archives",
-    position: { top: "66%", left: "32%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 6,
-    name: "Clear Falls",
-    position: { top: "44%", left: "33%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 7,
-    name: "Lost Lair",
-    position: { top: "34%", left: "34%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 8,
-    name: "Serpent Queen's Dwelling",
-    position: { top: "16%", left: "48%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-  {
-    id: 9,
-    name: "Vault of Sheddin",
-    position: { top: "29%", left: "67%" },
-    isDisabled: true,
-    locationDetails: "",
-  },
-];
+import { IMapLocation } from "../types";
+import DraggableMap from "../components/DraggableMap";
 
 const quests = [
   {
@@ -268,7 +184,7 @@ const items = [
 
 const WorldMap = () => {
   const [selectedLocation, setSelectedLocation] = useState<IMapLocation | null>(
-    null
+    null,
   );
   const [selectedTab, setSelectedTab] = useState<string>(tabs[0]);
   const [showLocationDetails, setShowLocationDetails] =
@@ -305,17 +221,6 @@ const WorldMap = () => {
     };
   });
 
-  const handleLocationClick = (location: IMapLocation) => {
-    const userSelectedLocation = worldMapLocations.find(
-      (loc) => loc.id === location.id
-    );
-
-    if (userSelectedLocation !== undefined) {
-      setSelectedLocation(userSelectedLocation);
-      setShowLocationDetails((s) => !s);
-    }
-  };
-
   const handleLocationModalToggle = () => {
     setShowLocationDetails((s) => !s);
     setSelectedTab(tabs[0]);
@@ -325,71 +230,25 @@ const WorldMap = () => {
     setSelectedTab(value);
   };
 
+  const handleSetSelectedLocation = (location: IMapLocation) => {
+    setSelectedLocation(location);
+  };
+
+  const handleSetShowLocationDetails = () => {
+    setShowLocationDetails((s) => !s);
+  };
+
   return (
     <div
       id="game-content"
       className="h-full w-full overflow-hidden"
       ref={containerRef}
     >
-      <TransformWrapper
-        ref={controllerRef}
-        initialScale={1}
-        initialPositionX={0}
-        initialPositionY={0}
-        centerOnInit={true}
-        doubleClick={{ disabled: true }}
-      >
-        {({ centerView, instance }) => {
-          controllerRef.current = { centerView, instance };
-
-          return (
-            <TransformComponent
-              wrapperClass="w-full h-full max-w-[100vw] max-h-[100vh]"
-              wrapperStyle={{
-                ...{
-                  width: "100%",
-                  height: "100%",
-                  backgroundColor: "steelblue",
-                },
-              }}
-            >
-              <div className="map-container w-max h-max">
-                <img
-                  src="/world-map-2.png"
-                  alt=""
-                  className="w-auto h-[100dvh] object-contain"
-                  draggable={false}
-                />
-              </div>
-
-              {/* World Map Locations */}
-              {worldMapLocations.map((location, index) => (
-                <div
-                  key={index}
-                  className={`absolute w-auto h-auto cursor-pointer group ${
-                    !location.isDisabled
-                      ? "hover:scale-110"
-                      : "hover:cursor-not-allowed"
-                  }`}
-                  style={location.position}
-                >
-                  <button
-                    disabled={location.isDisabled}
-                    className={`min-w-[125px] bg-white text-black p-2 flex justify-center items-center ${
-                      !location.isDisabled
-                        ? "bg-opacity-80 hover:bg-opacity-100"
-                        : "bg-opacity-50 hover:cursor-not-allowed"
-                    }`}
-                    onClick={() => handleLocationClick(location)}
-                  >
-                    <p style={{ fontSize: "1.25rem" }}>{location.name}</p>
-                  </button>
-                </div>
-              ))}
-            </TransformComponent>
-          );
-        }}
-      </TransformWrapper>
+      <DraggableMap
+        controllerRef={controllerRef}
+        handleSetSelectedLocation={handleSetSelectedLocation}
+        handleSetShowLocationDetails={handleSetShowLocationDetails}
+      />
 
       {/* Location Details Modal */}
       {selectedLocation !== null && (
