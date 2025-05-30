@@ -22,7 +22,7 @@ function Modal({ showModal, handleModalToggle, children }: ModalProps) {
         <>
           <div className="overlay" />
           <div className="modal relative flex justify-center items-center bg-black bg-opacity-80">
-            <div className="absolute top-7 right-8 z-20">
+            <div className="absolute -top-8 -right-4 z-20">
               <CloseBtn handleOnClick={handleModalToggle} />
             </div>
             <div className="absolute">
@@ -33,7 +33,7 @@ function Modal({ showModal, handleModalToggle, children }: ModalProps) {
         </>
       )}
     </>,
-    modalRoot
+    modalRoot,
   );
 }
 

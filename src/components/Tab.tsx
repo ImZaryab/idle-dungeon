@@ -50,9 +50,11 @@ const Tab = ({ isActive, value, handleTabChange }: TabProps) => {
           />
         </svg>
       )}
-      <h3 className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isActive && "pt-4"}`}>
+      <h4
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 ${isActive && "pt-3"}`}
+      >
         {value}
-      </h3>
+      </h4>
     </button>
   );
 };

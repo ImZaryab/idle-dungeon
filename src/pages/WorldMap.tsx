@@ -8,6 +8,7 @@ import DraggableMap from "../components/DraggableMap";
 import useSound from "use-sound";
 import modalOpenSound from "../assets/sfx/select_01.wav";
 import modalCloseSound from "../assets/sfx/cancel_01.wav";
+import Button from "../components/Button";
 
 const quests = [
   {
@@ -42,6 +43,20 @@ const quests = [
     id: 2,
     locationId: 0,
     title: "Field Trouble",
+    type: "Combat",
+    description:
+      "The locals are tired of wild beasts damaging their fields and want someone to take care of the problem by any means necessary.",
+    completionTime: "1 Hour",
+    reputationRequirement: 0,
+    buffs: {
+      Endurance: "-15% completion time",
+      Power: "-5% completion time",
+    },
+  },
+  {
+    id: 3,
+    locationId: 0,
+    title: "The Forth",
     type: "Combat",
     description:
       "The locals are tired of wild beasts damaging their fields and want someone to take care of the problem by any means necessary.",
@@ -244,15 +259,6 @@ const WorldMap = () => {
     setSelectedLocation(location);
   };
 
-  // const handleSetShowLocationDetails = () => {
-  //   if (!showLocationDetails) {
-  //     openModalSound();
-  //   } else {
-  //     closeModalSound();
-  //   }
-  //   setShowLocationDetails((s) => !s);
-  // };
-
   return (
     <div
       id="game-content"
@@ -272,7 +278,7 @@ const WorldMap = () => {
           handleModalToggle={handleLocationModalToggle}
         >
           <div className="text-teal-900">
-            <div className="px-10 py-6 w-full">
+            <div className="px-10 pt-1 w-full">
               <TabLayout
                 tabs={tabs}
                 value={selectedTab}
@@ -281,21 +287,19 @@ const WorldMap = () => {
 
               {/* QUESTBOARD */}
               {selectedTab === ModalTabs.Questboard && (
-                <ul className="mt-6 flex flex-col gap-4 items-center h-[405px] overflow-y-auto">
+                <ul className="mt-4 flex flex-col gap-4 items-center h-[430px] overflow-y-auto">
                   {quests
                     .filter((q) => q.locationId === selectedLocation.id)
                     .map((q, index) => (
                       <Listing key={index}>
                         <li className="absolute top-0 left-0 py-4 pr-4 pl-6">
-                          <h2 className="px-8 underline underline-offset-3">
+                          <h3 className="underline underline-offset-3">
                             {q.title}
-                          </h2>
-                          <h3 className="mt-1">{q.description}</h3>
+                          </h3>
+                          <h4 className="mt-1">{q.description}</h4>
 
                           <div className="w-full flex justify-end pr-4">
-                            <button className="hover:cursor-pointer border border-teal-900 px-4 text-center py-1 hover:bg-white">
-                              <h3>Accept</h3>
-                            </button>
+                            <Button text="Accept" handleClick={() => {}} />
                           </div>
                         </li>
                       </Listing>
