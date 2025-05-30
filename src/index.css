@@ -11,14 +11,14 @@
 }
 
 :root {
-  font-family: "Pixel Arial", Inter, system-ui, Avenir, Helvetica, Arial,
-    sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  font-family:
+    "Pixel Arial", Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5 !important;
+  font-weight: 400 !important;
 
   color-scheme: light dark;
   color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  background-color: #000000;
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -64,10 +64,6 @@ html ::-webkit-scrollbar {
   left: 50%;
   transform: translate(-50%, -50%);
   z-index: 10;
-}
-
-.nes-ui-text.nes-ui-is-xlarge {
-  font-size: 2rem;
 }
 
 h1 {

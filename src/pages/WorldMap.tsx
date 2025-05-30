@@ -5,6 +5,9 @@ import ItemList from "../components/ItemList";
 import Listing from "../components/Listing";
 import { IMapLocation } from "../types";
 import DraggableMap from "../components/DraggableMap";
+import useSound from "use-sound";
+import modalOpenSound from "../assets/sfx/select_01.wav";
+import modalCloseSound from "../assets/sfx/cancel_01.wav";
 
 const quests = [
   {
@@ -183,6 +186,8 @@ const items = [
 ];
 
 const WorldMap = () => {
+  const [openModalSound] = useSound(modalOpenSound, { volume: 5 });
+  const [closeModalSound] = useSound(modalCloseSound, { volume: 5 });
   const [selectedLocation, setSelectedLocation] = useState<IMapLocation | null>(
     null,
   );
@@ -222,6 +227,11 @@ const WorldMap = () => {
   });
 
   const handleLocationModalToggle = () => {
+    if (!showLocationDetails) {
+      openModalSound();
+    } else {
+      closeModalSound();
+    }
     setShowLocationDetails((s) => !s);
     setSelectedTab(tabs[0]);
   };
@@ -234,9 +244,14 @@ const WorldMap = () => {
     setSelectedLocation(location);
   };
 
-  const handleSetShowLocationDetails = () => {
-    setShowLocationDetails((s) => !s);
-  };
+  // const handleSetShowLocationDetails = () => {
+  //   if (!showLocationDetails) {
+  //     openModalSound();
+  //   } else {
+  //     closeModalSound();
+  //   }
+  //   setShowLocationDetails((s) => !s);
+  // };
 
   return (
     <div
@@ -247,7 +262,7 @@ const WorldMap = () => {
       <DraggableMap
         controllerRef={controllerRef}
         handleSetSelectedLocation={handleSetSelectedLocation}
-        handleSetShowLocationDetails={handleSetShowLocationDetails}
+        handleSetShowLocationDetails={handleLocationModalToggle}
       />
 
       {/* Location Details Modal */}

@@ -1,7 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { Route, Routes, useLocation } from "react-router";
-import StartScreen from "../pages/StartScreen";
-import { GameScreen } from "../pages/GameScreen";
 import NoPage from "../pages/NoPage";
 import LoginPage from "../pages/Login";
 import { useUser } from "@clerk/clerk-react";
@@ -83,7 +81,7 @@ const InitialTransition = () => {
           y="50%"
           style={{ fill: "url(#pattern)", fontSize: "2rem" }}
         >
-          idle dungeon
+          rise of arwiea
         </text>
       </motion.svg>
     </motion.div>
@@ -95,30 +93,21 @@ function AnimatedRoutes() {
   const { isLoaded } = useUser();
 
   if (!isLoaded) {
-    return <div>Loading...</div>;
+    return <></>;
   }
 
   return (
     <AnimatePresence mode="wait">
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/map" element={<WorldMap />} />
         <Route element={<Layout />}>
-          <Route path="/map" element={<WorldMap />} />
           <Route
             path="/"
             element={
               <AuthGuard>
                 <InitialTransition />
-                <StartScreen />
-              </AuthGuard>
-            }
-          />
-          <Route
-            path="/game"
-            element={
-              <AuthGuard>
-                <InitialTransition />
-                <GameScreen />
+                <WorldMap />
               </AuthGuard>
             }
           />

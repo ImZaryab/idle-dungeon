@@ -151,7 +151,7 @@ const DraggableMap = ({
                   }`}
                   onClick={() => handleLocationClick(location)}
                 >
-                  <p style={{ fontSize: "1.25rem" }}>{location.name}</p>
+                  <p>{location.name}</p>
                 </button>
               </div>
             ))}
