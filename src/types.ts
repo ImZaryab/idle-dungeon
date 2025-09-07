@@ -74,3 +74,17 @@ export interface IMapLocation {
   isDisabled: boolean;
   locationDetails: string;
 }
+
+export type LocationQuest = {
+  locationId: number;
+  id: number;
+  title: string;
+  description: string;
+  completionTime: number;
+  currencyReward: number;
+  expReward: number;
+  energyCost: number;
+  isRepeatable: boolean;
+  minLevelRequirement: number;
+  minReputationRequirement: number;
+}

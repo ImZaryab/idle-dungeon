@@ -3,71 +3,13 @@ import Modal from "../components/Modal";
 import TabLayout from "../components/TabLayout";
 import ItemList from "../components/ItemList";
 import Listing from "../components/Listing";
-import { IMapLocation } from "../types";
+import { IMapLocation, LocationQuest } from "../types";
 import DraggableMap from "../components/DraggableMap";
 import useSound from "use-sound";
 import modalOpenSound from "../assets/sfx/select_01.wav";
 import modalCloseSound from "../assets/sfx/cancel_01.wav";
 import Button from "../components/Button";
-
-const quests = [
-  {
-    id: 0,
-    locationId: 0,
-    title: "Log supply shortage",
-    type: "Gathering",
-    description:
-      "The local carpenter wants someone to bring a bunch of logs from the nearby forest.",
-    completionTime: "30 mins",
-    reputationRequirement: 0,
-    buffs: {
-      Endurance: "-15% completion time",
-      Power: "-5% completion time",
-    },
-  },
-  {
-    id: 1,
-    locationId: 0,
-    title: "Stone supply shortage",
-    type: "Gathering",
-    description:
-      "The blacksmith has ran out of stones and is willing to pay a decent reward to whoever brings some stones.",
-    completionTime: "30 mins",
-    reputationRequirement: 0,
-    buffs: {
-      Endurance: "-15% completion time",
-      Power: "-5% completion time",
-    },
-  },
-  {
-    id: 2,
-    locationId: 0,
-    title: "Field Trouble",
-    type: "Combat",
-    description:
-      "The locals are tired of wild beasts damaging their fields and want someone to take care of the problem by any means necessary.",
-    completionTime: "1 Hour",
-    reputationRequirement: 0,
-    buffs: {
-      Endurance: "-15% completion time",
-      Power: "-5% completion time",
-    },
-  },
-  {
-    id: 3,
-    locationId: 0,
-    title: "The Forth",
-    type: "Combat",
-    description:
-      "The locals are tired of wild beasts damaging their fields and want someone to take care of the problem by any means necessary.",
-    completionTime: "1 Hour",
-    reputationRequirement: 0,
-    buffs: {
-      Endurance: "-15% completion time",
-      Power: "-5% completion time",
-    },
-  },
-];
+import { getQuests } from "../controllers/quest";
 
 enum ModalTabs {
   Questboard = "Questboard",
@@ -209,6 +151,7 @@ const WorldMap = () => {
   const [selectedTab, setSelectedTab] = useState<string>(tabs[0]);
   const [showLocationDetails, setShowLocationDetails] =
     useState<boolean>(false);
+  const [quests, setQuests] = useState<LocationQuest[]>([]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controllerRef = useRef<any>(null);
@@ -257,7 +200,13 @@ const WorldMap = () => {
 
   const handleSetSelectedLocation = (location: IMapLocation) => {
     setSelectedLocation(location);
+    handleGetLocationQuests(location.id)
   };
+
+  const handleGetLocationQuests = async (locationId: number) => {
+    const quests = await getQuests(locationId)
+    setQuests(quests)
+  }
 
   return (
     <div
@@ -289,8 +238,7 @@ const WorldMap = () => {
               {selectedTab === ModalTabs.Questboard && (
                 <ul className="mt-4 flex flex-col gap-4 items-center h-[430px] overflow-y-auto">
                   {quests
-                    .filter((q) => q.locationId === selectedLocation.id)
-                    .map((q, index) => (
+                    .map((q: LocationQuest, index: number) => (
                       <Listing key={index}>
                         <li className="absolute top-0 left-0 py-4 pr-4 pl-6">
                           <h3 className="underline underline-offset-3">
@@ -299,7 +247,7 @@ const WorldMap = () => {
                           <h4 className="mt-1">{q.description}</h4>
 
                           <div className="w-full flex justify-end pr-4">
-                            <Button text="Accept" handleClick={() => {}} />
+                            <Button text="Accept" handleClick={() => { }} />
                           </div>
                         </li>
                       </Listing>

@@ -11,7 +11,7 @@ interface DraggableMapProps {
 
 const worldMapLocations: IMapLocation[] = [
   {
-    id: 0,
+    id: 1,
     name: "Westfordshire",
     position: { top: "51%", left: "18%" },
     isDisabled: false,
@@ -19,63 +19,63 @@ const worldMapLocations: IMapLocation[] = [
       "This is your home town. You start your adventures from here. Before you leave, make sure your inventory is stacked and your gear is all set! Once your adventure is over, you can come back here to rest.",
   },
   {
-    id: 1,
+    id: 2,
     name: "Altar of stars",
     position: { top: "28%", left: "45%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 2,
+    id: 3,
     name: "Sanctum of sorrows",
     position: { top: "40%", left: "69%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 3,
+    id: 4,
     name: "Cloudmillton",
     position: { top: "45%", left: "51%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 4,
+    id: 5,
     name: "Sunpoint Settlement",
     position: { top: "66%", left: "48%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 5,
+    id: 6,
     name: "Haunted Archives",
     position: { top: "66%", left: "32%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 6,
+    id: 7,
     name: "Clear Falls",
     position: { top: "44%", left: "33%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 7,
+    id: 8,
     name: "Lost Lair",
     position: { top: "34%", left: "34%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 8,
+    id: 9,
     name: "Serpent Queen's Dwelling",
     position: { top: "16%", left: "48%" },
     isDisabled: true,
     locationDetails: "",
   },
   {
-    id: 9,
+    id: 10,
     name: "Vault of Sheddin",
     position: { top: "29%", left: "67%" },
     isDisabled: true,
@@ -135,20 +135,18 @@ const DraggableMap = ({
             {worldMapLocations.map((location, index) => (
               <div
                 key={index}
-                className={`absolute w-auto h-auto cursor-pointer group ${
-                  !location.isDisabled
+                className={`absolute w-auto h-auto cursor-pointer group ${!location.isDisabled
                     ? "hover:scale-110"
                     : "hover:cursor-not-allowed"
-                }`}
+                  }`}
                 style={location.position}
               >
                 <button
                   disabled={location.isDisabled}
-                  className={`min-w-[125px] bg-white text-black p-2 flex justify-center items-center ${
-                    !location.isDisabled
+                  className={`min-w-[125px] bg-white text-black p-2 flex justify-center items-center ${!location.isDisabled
                       ? "bg-opacity-80 hover:bg-opacity-100"
                       : "bg-opacity-50 hover:cursor-not-allowed"
-                  }`}
+                    }`}
                   onClick={() => handleLocationClick(location)}
                 >
                   <p>{location.name}</p>
