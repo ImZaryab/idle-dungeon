@@ -88,3 +88,11 @@ export type LocationQuest = {
   minLevelRequirement: number;
   minReputationRequirement: number;
 }
+
+export type userDataReq = {
+  id?: string;
+  name?: string;
+  email?: string;
+  provider?: string;
+  isVerified?: boolean;
+}

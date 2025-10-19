@@ -9,7 +9,10 @@ import useSound from "use-sound";
 import modalOpenSound from "../assets/sfx/select_01.wav";
 import modalCloseSound from "../assets/sfx/cancel_01.wav";
 import Button from "../components/Button";
-import { getQuests } from "../controllers/quest";
+import { useGetLocationQuests } from "../controllers/quest";
+import { useGetCharacters } from "../controllers/characters";
+import useStore from "../store";
+import { useGetUserData } from "../controllers/user";
 
 enum ModalTabs {
   Questboard = "Questboard",
@@ -151,7 +154,17 @@ const WorldMap = () => {
   const [selectedTab, setSelectedTab] = useState<string>(tabs[0]);
   const [showLocationDetails, setShowLocationDetails] =
     useState<boolean>(false);
-  const [quests, setQuests] = useState<LocationQuest[]>([]);
+
+  const { data: quests, error: locationQuestsError, isLoading: locationQuestsLoading } = useGetLocationQuests(selectedLocation?.id);
+  const user = useStore((store) => store.getUser());
+  const { data: userData, error: userDataError, isLoading: userDataLoading } = useGetUserData({
+    id: user?.id,
+    email: user?.email,
+    name: user?.name,
+    provider: user?.provider,
+    isVerified: user?.verified
+  })
+  const { data: characters, error: charactersError, isLoading: charactersLoading } = useGetCharacters(user?.id)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controllerRef = useRef<any>(null);
@@ -200,13 +213,17 @@ const WorldMap = () => {
 
   const handleSetSelectedLocation = (location: IMapLocation) => {
     setSelectedLocation(location);
-    handleGetLocationQuests(location.id)
+    console.log(locationQuestsLoading);
+    console.log(locationQuestsError);
   };
 
-  const handleGetLocationQuests = async (locationId: number) => {
-    const quests = await getQuests(locationId)
-    setQuests(quests)
-  }
+  console.log("User:", user)
+  console.log("UserData:", userData);
+  console.log("UserDataError:", userDataError)
+  console.log("userDataLoading:", userDataLoading)
+  console.log("CharactersError:", charactersError)
+  console.log("CharactersLoading:", charactersLoading)
+  console.log("Characters:", characters);
 
   return (
     <div
@@ -237,7 +254,8 @@ const WorldMap = () => {
               {/* QUESTBOARD */}
               {selectedTab === ModalTabs.Questboard && (
                 <ul className="mt-4 flex flex-col gap-4 items-center h-[430px] overflow-y-auto">
-                  {quests
+                  {locationQuestsLoading && <div className="text-white h-full flex justify-center items-center"><h3>Gathering quests...</h3></div>}
+                  {!locationQuestsLoading && quests && quests
                     .map((q: LocationQuest, index: number) => (
                       <Listing key={index}>
                         <li className="absolute top-0 left-0 py-4 pr-4 pl-6">
@@ -254,7 +272,6 @@ const WorldMap = () => {
                     ))}
                 </ul>
               )}
-
               {/* SHOP */}
               {selectedTab === ModalTabs.Shop && <ItemList items={items} />}
             </div>
