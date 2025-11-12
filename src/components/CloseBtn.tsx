@@ -18,7 +18,7 @@ const CloseBtn = ({ handleOnClick }: CloseBtnProps) => {
           width={21 * 2}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 -0.5 21 21"
-          shape-rendering="crispEdges"
+          shapeRendering="crispEdges"
         >
           <metadata>
             Made with Pixels to Svg https://codepen.io/shshaw/pen/XbxvNj
@@ -62,7 +62,7 @@ const CloseBtn = ({ handleOnClick }: CloseBtnProps) => {
           width={21 * 2}
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 -0.5 21 21"
-          shape-rendering="crispEdges"
+          shapeRendering="crispEdges"
         >
           <metadata>
             Made with Pixels to Svg https://codepen.io/shshaw/pen/XbxvNj

@@ -1,12 +1,14 @@
 interface ButtonProps {
   text: string;
   handleClick: () => void;
+  disabled?: boolean;
 }
 
-const Button = ({ text, handleClick }: ButtonProps) => {
+const Button = ({ text, handleClick, disabled }: ButtonProps) => {
   return (
     <button
       onClick={handleClick}
+      disabled={disabled}
       className="group relative hover:cursor-pointer"
     >
       {/* DEFAULT STATE */}
@@ -15,7 +17,7 @@ const Button = ({ text, handleClick }: ButtonProps) => {
         width={64 * 2}
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 -0.5 64 16"
-        shape-rendering="crispEdges"
+        shapeRendering="crispEdges"
       >
         <metadata>
           Made with Pixels to Svg https://codepen.io/shshaw/pen/XbxvNj
@@ -46,7 +48,7 @@ const Button = ({ text, handleClick }: ButtonProps) => {
         className="hidden group-hover:block"
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 -0.5 64 16"
-        shape-rendering="crispEdges"
+        shapeRendering="crispEdges"
       >
         <metadata>
           Made with Pixels to Svg https://codepen.io/shshaw/pen/XbxvNj
