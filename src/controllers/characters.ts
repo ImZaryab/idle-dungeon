@@ -10,6 +10,7 @@ export function useGetCharacters(userId?: string) {
       if (!userId) return [];
       const res = await fetch(`${BASE_URL}/boundCharacters`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId }),
       });
       const charactersResponse = await res.json();

@@ -1,30 +1,20 @@
 import { create } from "zustand";
 import { IUser } from "./types";
 
+/**
+ * Global store for Clerk authentication session data only.
+ * Backend user data (characters, gold, etc.) managed via React Query.
+ */
 type Store = {
   authUser: IUser | null;
-  requestLoading: boolean;
   setAuthUser: (user: IUser | null) => void;
-  setRequestLoading: (isLoading: boolean) => void;
-  getUser: () => IUser | null;
   reset: () => void;
 };
 
-const useStore = create<Store>((set, get) => ({
+const useStore = create<Store>((set) => ({
   authUser: null,
-  requestLoading: false,
-  setAuthUser: (user) => set((state) => ({ ...state, authUser: user })),
-  setRequestLoading: (isLoading) =>
-    set((state) => ({ ...state, requestLoading: isLoading })),
-  getUser: () => {
-    return get().authUser;
-  },
-  reset: () => {
-    set({
-      authUser: null,
-      requestLoading: false,
-    });
-  },
+  setAuthUser: (user) => set({ authUser: user }),
+  reset: () => set({ authUser: null }),
 }));
 
 export default useStore;

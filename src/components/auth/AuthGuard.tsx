@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import useStore from "../../store";
 import { IUser } from "../../store/types";
+import { useGetUserData } from "../../controllers/user";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -32,6 +33,17 @@ export function AuthGuard({ children }: AuthGuardProps) {
       setUser(authUserObj);
     }
   }, [isLoaded, user, navigate, setUser]);
+
+  const authUser = useStore((state) => state.authUser);
+
+  // Automatically verify/create user in backend
+  useGetUserData({
+    id: authUser?.id,
+    email: authUser?.email,
+    name: authUser?.name,
+    provider: authUser?.provider,
+    isVerified: authUser?.verified,
+  });
 
   if (!isLoaded) {
     return <div>Loading...</div>;

@@ -87,7 +87,7 @@ export type LocationQuest = {
   isRepeatable: boolean;
   minLevelRequirement: number;
   minReputationRequirement: number;
-}
+};
 
 export type userDataReq = {
   id?: string;
@@ -95,4 +95,11 @@ export type userDataReq = {
   email?: string;
   provider?: string;
   isVerified?: boolean;
-}
+};
+
+export type SSEEvent = "questCompleted" | "rewardClaimed";
+
+export type SSEEventPayload = {
+  type: SSEEvent;
+  playableCharacterId?: number;
+};

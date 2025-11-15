@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import InterfaceBackground from "./InterfaceBackground";
 import CloseBtn from "./CloseBtn";
+import { Toaster } from "sonner";
 
 interface ModalProps {
   showModal: boolean;
@@ -30,10 +31,11 @@ function Modal({ showModal, handleModalToggle, children }: ModalProps) {
             </div>
             <div className="z-10 w-[767px] h-[58dvh] relative">{children}</div>
           </div>
+          <Toaster />
         </>
       )}
     </>,
-    modalRoot,
+    modalRoot
   );
 }
 

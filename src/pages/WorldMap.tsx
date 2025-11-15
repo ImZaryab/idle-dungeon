@@ -8,6 +8,7 @@ import {
   CharacterStatus,
   IMapLocation,
   LocationQuest,
+  SSEEventPayload,
 } from "../types";
 import DraggableMap from "../components/DraggableMap";
 import useSound from "use-sound";
@@ -21,8 +22,8 @@ import {
   useSendCharacterOnQuest,
 } from "../controllers/characters";
 import useStore from "../store";
-import { useGetUserData } from "../controllers/user";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 enum ModalTabs {
   Questboard = "Questboard",
@@ -63,42 +64,18 @@ const WorldMap = () => {
 
   const queryClient = useQueryClient();
 
-  const {
-    data: quests,
-    error: locationQuestsError,
-    isLoading: locationQuestsLoading,
-  } = useGetLocationQuests(selectedLocation?.id);
-  const user = useStore((store) => store.getUser());
-  const {
-    data: userData,
-    error: userDataError,
-    isLoading: userDataLoading,
-  } = useGetUserData({
-    id: user?.id,
-    email: user?.email,
-    name: user?.name,
-    provider: user?.provider,
-    isVerified: user?.verified,
-  });
-  const {
-    data: characters,
-    error: charactersError,
-    isLoading: charactersLoading,
-  } = useGetCharacters(user?.id);
+  const { data: quests, isLoading: locationQuestsLoading } =
+    useGetLocationQuests(selectedLocation?.id);
 
-  const {
-    mutate: sendCharacterOnQuest,
-    isPending: isSendingCharacterOnQuest,
-    error: sendCharacterOnQuestError,
-    data: sendCharacterOnQuestResult,
-  } = useSendCharacterOnQuest();
+  const user = useStore((state) => state.authUser);
+  // userData accessible via: queryClient.getQueryData([`${user?.name}-UserData`])
 
-  const {
-    mutate: completeQuest,
-    isPending: isCompletingQuest,
-    error: completeQuestError,
-    data: completeQuestResult,
-  } = useCompleteQuest();
+  const { data: characters } = useGetCharacters(user?.id);
+
+  const { mutate: sendCharacterOnQuest, isPending: isSendingCharacterOnQuest } =
+    useSendCharacterOnQuest();
+
+  const { mutate: completeQuest } = useCompleteQuest();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const controllerRef = useRef<any>(null);
@@ -131,6 +108,66 @@ const WorldMap = () => {
     };
   });
 
+  //* SSE EventSource
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const eventSource = new EventSource(
+      `http://localhost:3000/api/character/stream`
+    );
+
+    // Handle successful connections
+    eventSource.onopen = () => {
+      console.log("SSE connection established");
+    };
+
+    // Handle messages
+    eventSource.onmessage = (event) => {
+      try {
+        const eventPayload: SSEEventPayload = JSON.parse(event.data);
+        //Handle SSE updates based on "type"
+        switch (eventPayload.type) {
+          case "questCompleted":
+            console.log("Received questCompleted update:", eventPayload);
+            queryClient.setQueryData(
+              [`${user?.id}-Characters`],
+              (oldData: any) => {
+                if (!oldData) return oldData;
+                const optimisticUpdate = oldData.map((char: Character) =>
+                  char.id === eventPayload.playableCharacterId
+                    ? { ...char, status: CharacterStatus.QUESTCOMPLETED }
+                    : char
+                );
+                return optimisticUpdate;
+              }
+            );
+            break;
+          case "rewardClaimed":
+            console.log("Received rewardClaimed update:", eventPayload);
+            break;
+          default:
+            console.log("Received unknown update:", eventPayload);
+        }
+      } catch (err) {
+        console.error("Error processing SSE message:", err);
+      } finally {
+        //TODO
+      }
+    };
+
+    // Handle errors
+    eventSource.onerror = (error) => {
+      console.error("SSE connection error:", error);
+      eventSource.close();
+    };
+
+    // Clean up the connection when component unmounts
+    return () => {
+      console.log("Closing SSE connection");
+      eventSource.close();
+    };
+  }, [user]);
+
   const handleLocationModalToggle = () => {
     if (!showLocationDetails) {
       openModalSound();
@@ -160,7 +197,6 @@ const WorldMap = () => {
   };
 
   const handleSendCharacterOnQuest = (characterId: number) => {
-    console.log("----------------sending on quest!");
     if (!selectedQuest) {
       console.warn("No quest selected");
       return;
@@ -190,6 +226,10 @@ const WorldMap = () => {
               return optimisticUpdate;
             }
           );
+
+          toast("Character sent on quest!", {
+            duration: 5000,
+          });
         },
         onError: (error) => {
           console.error(
@@ -209,6 +249,10 @@ const WorldMap = () => {
           //Refetch the latest states of the characters
           queryClient.invalidateQueries({
             queryKey: [`${user?.id}-Characters`],
+          });
+
+          toast("Quest completed and rewards claimed!", {
+            duration: 5000,
           });
         },
         onError: (error) => {
